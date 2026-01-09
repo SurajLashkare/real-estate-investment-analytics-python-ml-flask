@@ -4,13 +4,14 @@ import numpy as np
 import os
 from datetime import datetime
 
+# ---------------- APP CONFIG ----------------
 app = Flask(__name__, template_folder="../frontend/templates")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_PATH = os.path.join(BASE_DIR, "data", "master_dataset.csv")
+DATA_PATH = os.path.join(BASE_DIR, "data", "processed", "master_dataset.csv")
 
 if not os.path.exists(DATA_PATH):
-    raise FileNotFoundError("Dataset not found")
+    raise FileNotFoundError(f"Dataset not found at: {DATA_PATH}")
 
 df = pd.read_csv(DATA_PATH)
 df.columns = df.columns.str.strip()
@@ -39,8 +40,10 @@ df["rental_yield_pct"] = (
     pd.to_numeric(df["rental_yield_pct"], errors="coerce")
     if "rental_yield_pct" in df.columns else np.random.uniform(2.5, 4.5, len(df))
 )
+
 if df["rental_yield_pct"].mean() < 1:
     df["rental_yield_pct"] *= 100
+
 df["rental_yield_pct"] = df["rental_yield_pct"].clip(1.5, 6).fillna(3.5)
 
 # ---------------- HOME ----------------
@@ -58,7 +61,7 @@ def home():
         city_values=[float(v) for v in city_scores.values],
     )
 
-# ---------------- ANALYTICS (UPDATED) ----------------
+# ---------------- ANALYTICS ----------------
 @app.route("/analytics")
 def analytics():
     total_properties = int(len(df))
@@ -67,7 +70,6 @@ def analytics():
 
     high_score_pct = round((df[df["investment_score"] >= 55].shape[0] / total_properties) * 100, 2)
 
-    # Price Distribution
     price_bins = pd.cut(
         df["Price"],
         bins=[0, 5e6, 1e7, 5e7, 1e8, df["Price"].max()],
@@ -75,7 +77,6 @@ def analytics():
     )
     price_counts = price_bins.value_counts().sort_index()
 
-    # Investment Score Distribution
     score_bins = pd.cut(
         df["investment_score"],
         bins=[0, 40, 55, 70, 100],
@@ -83,7 +84,6 @@ def analytics():
     )
     score_counts = score_bins.value_counts().sort_index()
 
-    # ⭐ City-wise Average Price (NEW)
     city_price = df.groupby("City_clean")["Price"].mean().sort_values(ascending=False)
 
     return render_template(
@@ -235,8 +235,6 @@ def predict():
 
     return render_template("predict.html", form_data=form_data, output=output)
 
-
-import os
-
+# ---------------- RUN APP ----------------
 port = int(os.environ.get("PORT", 5000))
 app.run(host="0.0.0.0", port=port, debug=True)
