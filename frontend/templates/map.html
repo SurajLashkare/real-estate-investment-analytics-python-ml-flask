@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>City-wise Investment Map</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+    #map {
+      height: 620px;
+      width: 100%;
+      border-radius: 12px;
+    }
+
+    .legend-box {
+      background: white;
+      padding: 12px 14px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/">🏠 Real Estate Analytics</a>
+    <div class="d-flex gap-2">
+      <a href="/map" class="btn btn-outline-light btn-sm">Map View</a>
+      <a href="/properties" class="btn btn-outline-light btn-sm">Search Properties</a>
+      <a href="/predict" class="btn btn-outline-light btn-sm">Price Prediction</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4">
+  <h3>🗺️ City-wise Investment Map</h3>
+  <p class="text-muted">
+    Visual analysis of median prices & investment potential across Indian cities
+  </p>
+
+  <!-- FILTERS -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <label class="form-label">Select City</label>
+      <select id="cityFilter" class="form-select">
+        <option value="All">All Cities</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">
+        Minimum Investment Score: <b><span id="scoreValue">0</span></b>
+      </label>
+      <input type="range" id="scoreFilter" class="form-range" min="0" max="70" step="1" value="0">
+    </div>
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  const map = L.map('map').setView([22.9734, 78.6569], 5);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  const mapData = {{ map_data | tojson }};
+  const markerLayer = L.layerGroup().addTo(map);
+
+  const citySelect = document.getElementById("cityFilter");
+  const scoreSlider = document.getElementById("scoreFilter");
+  const scoreValue = document.getElementById("scoreValue");
+
+  [...new Set(mapData.map(c => c.city))].sort().forEach(city => {
+    const opt = document.createElement("option");
+    opt.value = city;
+    opt.textContent = city;
+    citySelect.appendChild(opt);
+  });
+
+  function getInsight(score) {
+    if (score >= 55) {
+      return "High rental demand with strong appreciation potential.";
+    } else if (score >= 45) {
+      return "Balanced market offering steady long-term growth.";
+    } else {
+      return "Lower investment appeal due to weaker demand signals.";
+    }
+  }
+
+  function drawMarkers() {
+    markerLayer.clearLayers();
+
+    const selectedCity = citySelect.value;
+    const minScore = parseFloat(scoreSlider.value);
+    scoreValue.innerText = minScore;
+
+    mapData.forEach(city => {
+      if ((selectedCity === "All" || city.city === selectedCity) && city.score >= minScore) {
+
+        let color =
+          city.score >= 55 ? 'green' :
+          city.score >= 45 ? 'orange' :
+          'red';
+
+        L.circleMarker([city.lat, city.lng], {
+          radius: 9,
+          fillColor: color,
+          color: '#000',
+          weight: 1,
+          fillOpacity: 0.85
+        })
+        .bindPopup(
+          `<b>${city.city}</b><br>
+           Median Price: ₹${city.price.toLocaleString()}<br>
+           Investment Score: ${city.score}<br>
+           <i>${getInsight(city.score)}</i>`
+        )
+        .addTo(markerLayer);
+      }
+    });
+  }
+
+  citySelect.addEventListener("change", drawMarkers);
+  scoreSlider.addEventListener("input", drawMarkers);
+
+  drawMarkers();
+
+  const legend = L.control({ position: "bottomright" });
+  legend.onAdd = function () {
+    const div = L.DomUtil.create("div", "legend-box");
+    div.innerHTML = `
+      <b>Investment Potential</b><br><br>
+      🟢 High (Score ≥ 55)<br>
+      🟡 Medium (45 – 54)<br>
+      🔴 Low (&lt; 45)
+    `;
+    return div;
+  };
+  legend.addTo(map);
+</script>
+
+</body>
+</html>

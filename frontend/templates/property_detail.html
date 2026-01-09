@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Property Details</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/">🏠 Real Estate Analytics</a>
+    <a href="/properties" class="btn btn-outline-light btn-sm">Back to Search</a>
+  </div>
+</nav>
+
+<div class="container mt-5">
+
+<div class="card shadow p-4 mb-4">
+  <h3>🏘️ Property Details</h3>
+  <hr>
+
+  <p><strong>City:</strong> {{ p.City_clean }}</p>
+  <p><strong>Locality:</strong> {{ p.Locality }}</p>
+  <p><strong>Price:</strong> ₹ {{ "{:,.0f}".format(p.Price) }}</p>
+  <p><strong>BHK:</strong> {{ p.BHK }}</p>
+  <p><strong>Investment Score:</strong> {{ p.investment_score }}</p>
+  <p><strong>Rental Yield (%):</strong> {{ "%.2f"|format(p.rental_yield_pct) }}</p>
+
+  {% if is_best_deal %}
+  <div class="alert alert-success mt-3">
+    ⭐ <strong>Best Deal:</strong> Below city median price with above-average investment score.
+  </div>
+  {% endif %}
+</div>
+
+<div class="card shadow p-4">
+  <h4>📊 Budget vs Investment Score</h4>
+  <canvas id="scoreChart"></canvas>
+</div>
+
+</div>
+
+<script>
+new Chart(document.getElementById("scoreChart"), {
+  type: "bar",
+  data: {
+    labels: ["Selected Property", "City Average", "Market Average"],
+    datasets: [{
+      label: "Investment Score",
+      data: [{{ p.investment_score }}, {{ city_avg_score }}, {{ overall_avg_score }}],
+      backgroundColor: ["#28a745", "#17a2b8", "#6c757d"]
+    }]
+  },
+  options: {
+    scales: {
+      y: { beginAtZero: true, max: 100 }
+    }
+  }
+});
+</script>
+
+</body>
+</html>

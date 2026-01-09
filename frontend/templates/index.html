@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real Estate Analytics Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">🏠 Real Estate Analytics</a>
+
+        <!-- NAVIGATION BUTTONS -->
+        <div class="d-flex gap-2">
+            <a href="/analytics" class="btn btn-outline-light btn-sm">📊 Analytics</a>
+            <a href="/map" class="btn btn-outline-light btn-sm">🗺️ Map View</a>
+            <a href="/properties" class="btn btn-outline-light btn-sm">Search Properties</a>
+            <a href="/predict" class="btn btn-outline-light btn-sm">Price Prediction</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+
+    <!-- ================= HEADER ================= -->
+    <h2 class="mb-1">📊 Analytics Dashboard</h2>
+    <p class="text-muted">Data-driven real estate investment insights</p>
+
+    <!-- ================= SUMMARY CARDS ================= -->
+    <div class="row g-4 mt-3">
+
+        <div class="col-md-3">
+            <div class="card shadow p-3">
+                <h6>Total Properties</h6>
+                <h3>{{ total_properties }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow p-3">
+                <h6>Avg Investment Score</h6>
+                <h3>{{ avg_investment_score }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow p-3">
+                <h6>Avg Rental Yield (%)</h6>
+                <h3>{{ avg_rental_yield }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow p-3">
+                <h6>Best City to Invest</h6>
+                <h3>{{ best_city }}</h3>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= SEARCH CTA ================= -->
+    <div class="card shadow p-4 mt-5 text-center">
+        <h4>🔍 Explore Investment-Ready Properties</h4>
+        <p class="text-muted mb-3">
+            Search realistic property listings based on city, budget and BHK
+        </p>
+        <a href="/properties" class="btn btn-primary btn-lg">
+            Search Properties
+        </a>
+    </div>
+
+    <!-- ================= CITY-WISE CHART ================= -->
+    <div class="card shadow p-4 mt-5">
+        <h4 class="mb-3">📈 City-wise Average Investment Score</h4>
+        <canvas id="cityChart"></canvas>
+    </div>
+
+    <!-- ================= ABOUT ================= -->
+    <div class="card shadow p-4 mt-5 mb-5">
+        <h4>🔎 What does this system do?</h4>
+        <ul class="mt-2">
+            <li>Analyzes real estate data using analytics techniques</li>
+            <li>Calculates investment score based on yield, risk & trends</li>
+            <li>Predicts property prices using advanced pricing logic</li>
+            <li>Visualizes city-wise investment potential using interactive maps</li>
+            <li>Provides data-driven insights for smarter investment decisions</li>
+        </ul>
+    </div>
+
+</div>
+
+<!-- ================= CHART SCRIPT ================= -->
+<script>
+    const ctx = document.getElementById('cityChart');
+
+    const cityLabels = {{ city_labels | default([]) | tojson }};
+    const cityValues = {{ city_values | default([]) | tojson }};
+
+    if (cityLabels.length > 0) {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: cityLabels,
+                datasets: [{
+                    label: 'Avg Investment Score',
+                    data: cityValues,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
